@@ -23,9 +23,9 @@ Turkish and English versions are rendered from the same timeline.
 - `index.html`: interactive player (play/pause, scrubbing, TR/EN switch, subtitles on/off; space bar plays and pauses)
 - `film.js`: the deterministic renderer, `drawFrame(ctx, t, lang)`
 - `i18n.js`: all copy and subtitle timings (TR + EN)
-- `render.mjs`: renders frame by frame in headless Chromium → ffmpeg (1920×1080, 60 fps, H.264)
+- `../tools/render.mjs`: renders frame by frame in headless Chromium → ffmpeg (1920×1080, 60 fps, H.264)
 - `soundtrack.mjs`: procedural music and sound design (WAV), synced to the timeline
-- `subtitles.mjs`: exports `.srt` / `.vtt` from `i18n.js`
+- `../tools/subtitles.mjs`: exports `.srt` / `.vtt` from `i18n.js`
 - `build.sh`: builds everything into `out/`
 
 ## Usage
@@ -33,8 +33,8 @@ Turkish and English versions are rendered from the same timeline.
 ```bash
 # preview: open index.html in a browser (?lang=en, ?t=39.5, ?subs=0)
 ./build.sh            # out/tapeout_promo_tr.mp4, out/tapeout_promo_en.mp4, .srt/.vtt
-node render.mjs --lang en --stills 10,40,70   # quick still frames
-node render.mjs --lang tr --subs 0 --name tapeout_promo_tr_clean.mp4   # version without burned-in subtitles
+node ../tools/render.mjs --dir . --lang en --stills 10,40,70   # quick still frames
+node ../tools/render.mjs --dir . --lang tr --subs 0 --name tapeout_promo_tr_clean.mp4   # version without burned-in subtitles
 ```
 
 To change the copy or the subtitle timings, edit `i18n.js` and rebuild.

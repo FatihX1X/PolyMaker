@@ -1,5 +1,6 @@
-// Offline renderer: node render.mjs --lang tr|en [--fps 60] [--from 0] [--to 76] [--stills 3,14,40] [--out dir]
-// Drives index.html?render in headless Chromium, paints each frame deterministically and pipes PNGs into ffmpeg.
+// Offline renderer for the films in this repo:
+//   node tools/render.mjs --dir promo|deweb --lang tr|en [--fps 60] [--from 0] [--to 76] [--stills 3,14,40] [--out dir] [--name file.mp4]
+// Drives <dir>/index.html?render in headless Chromium, paints each frame deterministically and pipes PNGs into ffmpeg.
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -13,15 +14,16 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, arr) =>
   if (a.startsWith('--')) acc.push([a.slice(2), arr[i + 1] && !arr[i + 1].startsWith('--') ? arr[i + 1] : true]);
   return acc;
 }, []));
+const filmDir = resolve(args.dir || join(here, '..', 'promo'));
 const lang = args.lang || 'en';
 const fps = Number(args.fps || 60);
-const outDir = resolve(args.out || join(here, 'out'));
+const outDir = resolve(args.out || join(filmDir, 'out'));
 const subs = args.subs !== '0';
 mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch({ args: ['--force-color-profile=srgb', '--disable-gpu-vsync'] });
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-await page.goto(pathToFileURL(join(here, 'index.html')).href + `?render=1&lang=${lang}`);
+await page.goto(pathToFileURL(join(filmDir, 'index.html')).href + `?render=1&lang=${lang}`);
 await page.evaluate(() => window.fontsReady);
 await page.evaluate(() => document.fonts.ready);
 const duration = await page.evaluate(() => window.TapeOutFilm.DURATION);
@@ -42,7 +44,8 @@ if (args.stills) {
 
 const from = Number(args.from || 0), to = Math.min(duration, Number(args.to || duration));
 const frames = Math.round((to - from) * fps);
-const file = join(outDir, args.name || `tapeout_promo_${lang}_video.mp4`);
+const prefix = await page.evaluate(() => window.TapeOutFilm.NAME || 'tapeout_promo');
+const file = join(outDir, args.name || `${prefix}_${lang}_video.mp4`);
 const ff = spawn('ffmpeg', [
   '-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-',
   '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-tune', 'film',

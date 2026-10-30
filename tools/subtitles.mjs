@@ -1,14 +1,17 @@
-// Exports the film's captions as .srt and .vtt for each language: node subtitles.mjs [outDir]
+// Exports a film's captions as .srt and .vtt for each language:
+//   node tools/subtitles.mjs <filmDir> [outDir] [filePrefix]
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const outDir = resolve(process.argv[2] || join(here, 'out'));
+const filmDir = resolve(process.argv[2] || join(here, '..', 'promo'));
+const outDir = resolve(process.argv[3] || join(filmDir, 'out'));
+const prefix = process.argv[4] || 'tapeout_promo';
 mkdirSync(outDir, { recursive: true });
 const sandbox = { window: {} };
-vm.runInNewContext(readFileSync(join(here, 'i18n.js'), 'utf8'), sandbox);
+vm.runInNewContext(readFileSync(join(filmDir, 'i18n.js'), 'utf8'), sandbox);
 const I18N = sandbox.window.TAPEOUT_I18N;
 
 const stamp = (s, sep) => {
@@ -19,7 +22,7 @@ const stamp = (s, sep) => {
 for (const [lang, L] of Object.entries(I18N)) {
   const srt = L.subs.map(([a, b, text], i) => `${i + 1}\n${stamp(a, ',')} --> ${stamp(b, ',')}\n${text}\n`).join('\n');
   const vtt = 'WEBVTT\n\n' + L.subs.map(([a, b, text]) => `${stamp(a, '.')} --> ${stamp(b, '.')}\n${text}\n`).join('\n');
-  writeFileSync(join(outDir, `tapeout_promo_${lang}.srt`), srt);
-  writeFileSync(join(outDir, `tapeout_promo_${lang}.vtt`), vtt);
+  writeFileSync(join(outDir, `${prefix}_${lang}.srt`), srt);
+  writeFileSync(join(outDir, `${prefix}_${lang}.vtt`), vtt);
 }
 console.log('wrote subtitles to', outDir);

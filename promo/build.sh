@@ -7,9 +7,9 @@ OUT="${1:-out}"
 mkdir -p "$OUT"
 
 node soundtrack.mjs "$OUT/soundtrack.wav"
-node subtitles.mjs "$OUT"
-node render.mjs --lang tr --out "$OUT" &
-node render.mjs --lang en --out "$OUT" &
+node ../tools/subtitles.mjs . "$OUT" tapeout_promo
+node ../tools/render.mjs --dir . --lang tr --out "$OUT" &
+node ../tools/render.mjs --dir . --lang en --out "$OUT" &
 wait
 
 for lang in tr en; do
